@@ -69,13 +69,13 @@ bcrypt.hash(password, saltRounds, (err, hash) => {
         console.log("Password Match:", result); // true
     });
 });
-```
+
 
 ## 2. JWT (JSON Web Token)
 **JWT** is used for secure authentication between a client and a server. It encodes user information in a token format.
 
 ### Example (Node.js with jsonwebtoken)
-```javascript
+javascript
 const jwt = require('jsonwebtoken');
 
 const user = { id: 1, username: "moazam" };
