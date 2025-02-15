@@ -49,7 +49,23 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatar) {
       throw new ApiError(500, "Failed to upload avatar");
     }
+    User.create({
+      fullName,
+      email,
+      username,
+      password,
+      avatar: avatar.url,
+      coverImage : coverImage?.url || "",
 
+    }); 
 
+  const createdUser = await User.findById(User._id).select("-password -refreshToken")
+    if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering the user");
+    }
+    return res.status(201).json(
+        new ApiResponse(200,  createdUser, "User registered successfully")
+)
+});
 
 export { registerUser };
