@@ -17,7 +17,8 @@ const uploadOnCloudinary = async (localFilePath) => {
     });
 
     // file has been uploaded scuecssfully
-    console.log("File uploaded successfully" , response.url);
+    //console.log("File uploaded successfully" , response.url);
+fs.unlinkSync(localFilePath);//remove the locally save temporoy files as upload operation got success
     return response;
 
   } catch (error) {
