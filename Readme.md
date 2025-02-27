@@ -103,3 +103,31 @@ npm install bcrypt jsonwebtoken
 ### Author
 Moazam Khan
 
+
+
+Here’s a well-structured definition and comparison for **Access Token** and **Refresh Token** that you can add to your GitHub README file:
+
+---
+
+### **Access Token vs. Refresh Token**  
+
+#### **Access Token**  
+An **Access Token** is a short-lived credential used to authenticate and authorize requests to a protected resource, such as an API or a web service. It is usually included in the `Authorization` header as a Bearer token and is required for making authenticated API requests.
+
+#### **Refresh Token**  
+A **Refresh Token** is a long-lived credential used to obtain a new Access Token without requiring the user to log in again. It is securely stored and used when the Access Token expires, ensuring continuous authentication.
+
+#### **Differences Between Access Token and Refresh Token**  
+
+| Feature           | Access Token | Refresh Token |
+|------------------|-------------|--------------|
+| **Purpose**       | Used for authenticating API requests | Used for generating a new Access Token when it expires |
+| **Lifespan**      | Short-lived (e.g., minutes to hours) | Long-lived (e.g., days to weeks) |
+| **Storage**       | Stored in memory (or HTTP-only cookies) | Stored securely (e.g., in a database or HTTP-only cookies) |
+| **Security Risk** | Higher risk if leaked, as it grants direct access | Lower risk but still sensitive, as it can generate new Access Tokens |
+| **Usage**        | Sent in API requests via `Authorization` header | Sent to the authentication server to request a new Access Token |
+| **Revocation**   | Cannot be revoked manually, expires naturally | Can be revoked by the authentication server if needed |
+
+---
+
+Let me know if you want any modifications or improvements! 🚀
