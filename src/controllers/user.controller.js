@@ -181,7 +181,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     req.cokkies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(400, "unauthorized request");
+    throw new ApiError(401, "unauthorized request");
   }
 
   try {
