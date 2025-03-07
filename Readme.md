@@ -131,3 +131,24 @@ A **Refresh Token** is a long-lived credential used to obtain a new Access Token
 ---
 
 Let me know if you want any modifications or improvements! 🚀
+
+
+This Mongoose schema defines a **Subscription** model that represents a relationship between a **subscriber** and a **channel**. In this schema, both `subscriber` and `channel` are referenced from the **User** model using `Schema.Types.ObjectId`. The `subscriber` is the user who subscribes to a channel, while the `channel` is the user (or creator) who provides the content that is being subscribed to. The schema also includes timestamps to automatically track when a subscription was created or updated.
+
+### **How to Find Subscribers for a Channel?**  
+If you want to find all subscribers of a particular channel, you need to query the **Subscription** collection and filter it by the `channel` field. This will return a list of all users who have subscribed to that specific channel. Here's a sample Mongoose query:
+
+```javascript
+const subscribers = await Subscription.find({ channel: channelId }).populate('subscriber');
+```
+This will return a list of users who have subscribed to the given `channelId`.
+
+### **How to Find Channels a User is Subscribed To?**  
+If you want to find all channels that a particular user has subscribed to, you need to query the `subscriber` field:
+
+```javascript
+const subscribedChannels = await Subscription.find({ subscriber: userId }).populate('channel');
+```
+This will return all channels that the `userId` has subscribed to.
+
+---
