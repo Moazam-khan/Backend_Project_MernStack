@@ -144,11 +144,17 @@ const subscribers = await Subscription.find({ channel: channelId }).populate('su
 This will return a list of users who have subscribed to the given `channelId`.
 
 ### **How to Find Channels a User is Subscribed To?**  
+
 If you want to find all channels that a particular user has subscribed to, you need to query the `subscriber` field:
 
 ```javascript
 const subscribedChannels = await Subscription.find({ subscriber: userId }).populate('channel');
 ```
 This will return all channels that the `userId` has subscribed to.
+
+Always created new doucment 
+ 1.channels find subscriber
+ 2.subscriber find channels
+
 
 ---
