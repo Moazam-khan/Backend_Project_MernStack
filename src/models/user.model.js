@@ -30,7 +30,6 @@ const userSchema = new Schema(
     },
     coverImage: {
       type: String, // cloudinary url
- 
     },
     watchHistory: [
       {
@@ -56,7 +55,7 @@ userSchema.pre("save", async function (next) {
   this.password = await bycrypt.hash(this.password, 10);
   next();
 });
-
+ 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bycrypt.compare(password, this.password);
 };

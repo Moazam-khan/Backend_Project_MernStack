@@ -2,7 +2,7 @@
 import express from "express"; // Express framework for building APIs
 import cookieParser from "cookie-parser"; // Middleware to parse cookies from incoming requests
 import cors from "cors"; // Middleware to enable Cross-Origin Resource Sharing (CORS)
-import userRouter from "./routes/user.router.js"; // Importing user-related routes
+
 
 // Creating an instance of an Express application
 const app = express();
@@ -32,6 +32,10 @@ app.use(cookieParser());
 
 // Importing routes (already done above)
 // This section could be used for additional route imports in the future
+
+
+// Importing user-related routes from `user.router.js`
+import userRouter from "./routes/user.router.js"; // Importing user-related routes
 
 // Declaring API routes
 // All requests starting with "/api/v1/users" will be handled by `userRouter`

@@ -11,7 +11,7 @@ const videoSchema = new Schema(
         thumnail: {
             type: String,//cloudinary url
             required: true,
-        },
+        }, 
         title: {
             type: String,
             required: true,
@@ -45,5 +45,5 @@ const videoSchema = new Schema(
         timestamps: true,
     }
 )
-
+videoSchema.plugin(mongooseAggregatePaginate)
 export const Video = mongoose.model("Video", videoSchema)
