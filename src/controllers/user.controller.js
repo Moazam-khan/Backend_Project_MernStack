@@ -175,34 +175,36 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  //get refresh token from cookies
-  //verify refresh token
-  //get user from refresh token
-  //generate new access token
-  //send new access token
-  //send new refresh token
   const incomingRefreshToken =
-    req.cokkies.refreshToken || req.body.refreshToken;
+    req.cookies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "unauthorized request");
+    throw new ApiError(401, "Unauthorized request. Refresh token is missing.");
   }
 
   try {
+    console.log("Incoming Refresh Token:", incomingRefreshToken);
+
     const decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
 
+    console.log("Decoded Token:", decodedToken);
+
     const user = await User.findById(decodedToken?._id);
 
     if (!user) {
-      throw new ApiError(401, "Invalid refresh token");
+      throw new ApiError(401, "Invalid refresh token. User not found.");
     }
 
+    console.log("Stored Refresh Token:", user?.refreshToken);
+
     if (incomingRefreshToken !== user?.refreshToken) {
-      throw new ApiError(401, "refresh token is expired");
+      console.error("Refresh token mismatch!");
+      throw new ApiError(401, "Refresh token is invalid or expired.");
     }
+
     const options = {
       httpOnly: true,
       secure: true,
@@ -214,7 +216,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cokkie("refreshToken", newRefreshToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
       .json(
         new ApiResponse(
           200,
@@ -223,10 +225,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
+    console.error("Error refreshing token:", error.message);
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
-
 const changeCurrentpassword = asyncHandler(async (req, res) => {
   //get user from req.user
   //get old password, new password, confirm password from req.body
@@ -249,11 +251,10 @@ const changeCurrentpassword = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
-
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
-    .join(200, req.user, "current user fetched sucessfully ");
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {

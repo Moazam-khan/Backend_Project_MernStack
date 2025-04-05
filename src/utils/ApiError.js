@@ -18,7 +18,7 @@ class ApiError extends Error {
     this.success = false; // Always set to false to indicate failure
     this.errors = errors; // Store additional error details
     //  this.errorCode = errorCode;  // Store the custom error code
-    this.data = data; // Store any additional error-related data
+    // this.data = data; // Store any additional error-related data
     this.stack = stack;
 
     //this.timestamp = new Date().toISOString();  // Store the timestamp of the error
