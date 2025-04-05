@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
@@ -337,7 +338,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Username is required");
   }
 
-  const channel = User.aggregate([
+  const channel = await User.aggregate([
     {
       $match: {
         username: username?.toLowerCase(),
@@ -389,7 +390,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   ]);
 
   if (!channel?.length) {
-    throw new ApiError(404, "Channel does not exist");
+    throw new ApiError(404, "Channel does not exist"); // Removed `data`
   }
 
   return res
@@ -412,14 +413,14 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         localField: "watchHistory",
         foreignField: "_id",
         as: "watchHistory",
-        pipeline: [
+        pipeline: [ // Corrected the typo from "pipline" to "pipeline"
           {
             $lookup: {
               from: "users",
               localField: "owner",
               foreignField: "_id",
               as: "owner",
-              pipline: [
+              pipeline: [ // Corrected the typo here as well
                 {
                   $project: {
                     fullName: 1,
@@ -441,12 +442,16 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
+
   return res
     .status(200)
     .json(
       new ApiResponse(
-      200, user[0].getWatchHistory,
-       "Watch history fetched successfully"));
+        200,
+        user[0]?.watchHistory || [],
+        "Watch history fetched successfully"
+      )
+    );
 });
 
 export {
