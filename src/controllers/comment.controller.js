@@ -9,12 +9,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
+    // Validate videoId
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
 
+    // Use 'new' keyword to create ObjectId
     const comments = await Comment.aggregate([
-        { $match: { video: mongoose.Types.ObjectId(videoId) } },
+        { $match: { video: new mongoose.Types.ObjectId(videoId) } }, // Fix here
         { $sort: { createdAt: -1 } },
         { $skip: (page - 1) * limit },
         { $limit: parseInt(limit) },
@@ -39,7 +41,6 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
     res.status(200).json(new ApiResponse(200, "Comments fetched successfully", comments));
 });
-
 const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { content } = req.body;
