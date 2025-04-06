@@ -24,6 +24,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid user ID.");
     }
 
+    // Fetch tweets for the specified user
     const tweets = await Tweet.find({ owner: userId }).populate("owner", "username fullName avatar");
     res.status(200).json(new ApiResponse(200, "User tweets fetched successfully.", tweets));
 });
@@ -69,7 +70,9 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(403, "You are not authorized to delete this tweet.");
     }
 
-    await tweet.remove();
+    // Use deleteOne() instead of remove()
+    await Tweet.deleteOne({ _id: tweetId });
+
     res.status(200).json(new ApiResponse(200, "Tweet deleted successfully."));
 });
 
