@@ -170,3 +170,58 @@ export {
     getChannelStats, 
     getChannelVideos
 }
+
+
+
+// # Understanding Dashboard Controller Routes
+
+// These two routes provide channel analytics and content management features for a YouTube-like platform. They're designed for creators to monitor their channel performance and manage their videos.
+
+// ## 1. getChannelStats
+
+// This route provides comprehensive statistics about the user's channel:
+
+// - **Purpose**: Shows an overview of channel performance metrics
+// - **Access**: Only available to authenticated users for their own channel
+// - **Data Returned**:
+//   - **Total Subscribers**: Number of users subscribed to the channel
+//   - **Total Videos**: Count of videos uploaded by the channel
+//   - **Total Views**: Cumulative views across all videos
+//   - **Total Likes**: Sum of likes received on all videos
+//   - **Recent Activity**:
+//     - Subscribers gained in the last 7 days
+//     - Videos published in the last 30 days
+
+// This is similar to the "Analytics" tab in YouTube Studio, giving creators a quick snapshot of their channel's performance and growth.
+
+// ## 2. getChannelVideos
+
+// This route retrieves a paginated list of all videos uploaded by the user:
+
+// - **Purpose**: Allows creators to browse and manage their video library
+// - **Access**: Only available to authenticated users for their own videos
+// - **Features**:
+//   - **Pagination**: Splits results into pages (default: 10 videos per page)
+//   - **Sorting**: Can sort by creation date, views, etc. (default: newest first)
+//   - **Enhanced Data**: Includes like counts for each video
+//   - **Metadata**: Provides pagination info (total pages, next/prev page links)
+
+// This is similar to the "Content" tab in YouTube Studio, where creators can see all their uploaded videos in an organized list.
+
+// ## How They Work Together
+
+// These two routes form a basic channel dashboard:
+// - **Stats** gives the big-picture overview of channel performance
+// - **Videos** provides detailed management of individual content pieces
+
+// They're typically used in a creator dashboard where the stats would appear at the top as summary cards or charts, and the videos would be displayed below as a sortable, paginated table.
+
+// ## Technical Implementation
+
+// Both routes use MongoDB aggregation pipelines for efficient data processing, with features like:
+// - Cross-collection lookups (from videos to likes)
+// - Conditional date filtering (for recent stats)
+// - Dynamic sorting options
+// - Proper pagination
+
+// This approach keeps database operations efficient even as the channel grows to have many videos, subscribers, and engagement metrics.
