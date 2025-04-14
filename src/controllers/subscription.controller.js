@@ -1,91 +1,205 @@
-import mongoose, { isValidObjectId } from "mongoose";
-import { User } from "../models/user.model.js";
-import { Subscription } from "../models/subscription.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import mongoose, {isValidObjectId} from "mongoose"
+import {User} from "../models/user.model.js"
+import { Subscription } from "../models/subscription.model.js"
+import {ApiError} from "../utils/ApiError.js"
+import {ApiResponse} from "../utils/ApiResponse.js"
+import {asyncHandler} from "../utils/asyncHandler.js"
 
-/**
- * Toggle subscription for a channel.
- * If the user is already subscribed, unsubscribe them.
- * If the user is not subscribed, subscribe them.
- */
+
 const toggleSubscription = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
-  const { userId } = req.user; // Assuming `req.user` contains the authenticated user's ID
+    const {channelId} = req.params
+    
+    // Check if channel ID is valid
+    if(!isValidObjectId(channelId)) {
+        throw new ApiError(400, "Invalid channel ID")
+    }
+    
+    // Check if channel exists
+    const channel = await User.findById(channelId)
+    if(!channel) {
+        throw new ApiError(404, "Channel not found")
+    }
+    
+    // Prevent users from subscribing to themselves
+    if(channelId.toString() === req.user?._id.toString()) {
+        throw new ApiError(400, "You cannot subscribe to yourself")
+    }
+    
+    // Check if subscription already exists
+    const existingSubscription = await Subscription.findOne({
+        subscriber: req.user?._id,
+        channel: channelId
+    })
+    
+    if(existingSubscription) {
+        // If subscription exists, remove it (unsubscribe)
+        await Subscription.findByIdAndDelete(existingSubscription._id)
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {subscribed: false}, "Unsubscribed successfully"))
+    } else {
+        // If subscription doesn't exist, create it (subscribe)
+        const subscription = await Subscription.create({
+            subscriber: req.user?._id,
+            channel: channelId
+        })
+        
+        if(!subscription) {
+            throw new ApiError(500, "Failed to subscribe")
+        }
+        
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {subscribed: true}, "Subscribed successfully"))
+    }
+})
 
-  // Validate channel ID
-  if (!isValidObjectId(channelId)) {
-    throw new ApiError(400, "Invalid channel ID");
-  }
-
-  // Check if the channel exists
-  const channel = await User.findById(channelId);
-  if (!channel) {
-    throw new ApiError(404, "Channel not found");
-  }
-
-  // Check if the user is already subscribed
-  const existingSubscription = await Subscription.findOne({
-    channel: channelId,
-    subscriber: userId,
-  });
-
-  if (existingSubscription) {
-    // Unsubscribe the user
-    await existingSubscription.deleteOne();
-    return res.status(200).json(new ApiResponse(200, "Unsubscribed successfully"));
-  } else {
-    // Subscribe the user
-    const newSubscription = new Subscription({
-      channel: channelId,
-      subscriber: userId,
-    });
-    await newSubscription.save();
-    return res.status(201).json(new ApiResponse(201, "Subscribed successfully"));
-  }
-});
-
-/**
- * Get all subscribers of a specific channel.
- * Returns a list of users who have subscribed to the channel.
- */
+// controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
+    const {channelId} = req.params
+    const {page = 1, limit = 10} = req.query
+    
+    if(!isValidObjectId(channelId)) {
+        throw new ApiError(400, "Invalid channel ID")
+    }
+    
+    // Check if channel exists
+    const channel = await User.findById(channelId)
+    if(!channel) {
+        throw new ApiError(404, "Channel not found")
+    }
+    
+    // Use aggregation to get subscribers with pagination
+    const subscribers = await Subscription.aggregate([
+        {
+            $match: {
+                channel: new mongoose.Types.ObjectId(channelId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "subscriber",
+                foreignField: "_id",
+                as: "subscriberDetails"
+            }
+        },
+        {
+            $unwind: "$subscriberDetails"
+        },
+        {
+            $project: {
+                _id: 0,
+                subscriber: {
+                    _id: "$subscriberDetails._id",
+                    username: "$subscriberDetails.username",
+                    fullName: "$subscriberDetails.fullName",
+                    avatar: "$subscriberDetails.avatar"
+                },
+                subscribedAt: "$createdAt"
+            }
+        },
+        {
+            $skip: (parseInt(page, 10) - 1) * parseInt(limit, 10)
+        },
+        {
+            $limit: parseInt(limit, 10)
+        }
+    ])
+    
+    // Count total subscribers for pagination meta
+    const totalSubscribers = await Subscription.countDocuments({
+        channel: channelId
+    })
+    
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {
+                subscribers,
+                totalSubscribers,
+                page: parseInt(page, 10),
+                limit: parseInt(limit, 10),
+                totalPages: Math.ceil(totalSubscribers / parseInt(limit, 10))
+            }, "Channel subscribers fetched successfully")
+        )
+})
 
-  // Validate channel ID
-  if (!isValidObjectId(channelId)) {
-    throw new ApiError(400, "Invalid channel ID");
-  }
-
-  // Find all subscribers for the channel
-  const subscribers = await Subscription.find({ channel: channelId }).populate("subscriber", "name email");
-  if (!subscribers.length) {
-    return res.status(404).json(new ApiResponse(404, "No subscribers found for this channel"));
-  }
-
-  res.status(200).json(new ApiResponse(200, "Subscribers retrieved successfully", subscribers));
-});
-
-/**
- * Get all channels a user is subscribed to.
- * Returns a list of channels the user has subscribed to.
- */
+// controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-  const { subscriberId } = req.params;
+    const { subscriberId } = req.params
+    const {page = 1, limit = 10} = req.query
+    
+    if(!isValidObjectId(subscriberId)) {
+        throw new ApiError(400, "Invalid subscriber ID")
+    }
+    
+    // Check if subscriber exists
+    const subscriber = await User.findById(subscriberId)
+    if(!subscriber) {
+        throw new ApiError(404, "Subscriber not found")
+    }
+    
+    // Use aggregation to get subscribed channels with pagination
+    const subscribedChannels = await Subscription.aggregate([
+        {
+            $match: {
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField: "_id",
+                as: "channelDetails"
+            }
+        },
+        {
+            $unwind: "$channelDetails"
+        },
+        {
+            $project: {
+                _id: 0,
+                channel: {
+                    _id: "$channelDetails._id",
+                    username: "$channelDetails.username",
+                    fullName: "$channelDetails.fullName",
+                    avatar: "$channelDetails.avatar",
+                    coverImage: "$channelDetails.coverImage"
+                },
+                subscribedAt: "$createdAt"
+            }
+        },
+        {
+            $skip: (parseInt(page, 10) - 1) * parseInt(limit, 10)
+        },
+        {
+            $limit: parseInt(limit, 10)
+        }
+    ])
+    
+    // Count total subscribed channels for pagination meta
+    const totalSubscribedChannels = await Subscription.countDocuments({
+        subscriber: subscriberId
+    })
+    
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {
+                subscribedChannels,
+                totalSubscribedChannels,
+                page: parseInt(page, 10),
+                limit: parseInt(limit, 10),
+                totalPages: Math.ceil(totalSubscribedChannels / parseInt(limit, 10))
+            }, "Subscribed channels fetched successfully")
+        )
+})
 
-  // Validate subscriber ID
-  if (!isValidObjectId(subscriberId)) {
-    throw new ApiError(400, "Invalid subscriber ID");
-  }
-
-  // Find all subscriptions for the user
-  const subscriptions = await Subscription.find({ subscriber: subscriberId }).populate("channel", "name email");
-  if (!subscriptions.length) {
-    return res.status(404).json(new ApiResponse(404, "No subscriptions found for this user"));
-  }
-
-  res.status(200).json(new ApiResponse(200, "Subscribed channels retrieved successfully", subscriptions));
-});
-
-export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };
+export {
+    toggleSubscription,
+    getUserChannelSubscribers,
+    getSubscribedChannels
+}
